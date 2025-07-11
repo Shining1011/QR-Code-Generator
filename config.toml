@@ -2,7 +2,7 @@
 
 [project]
 name = "QR Code Generator"
-version = "1.0.0"
+version = "0.1"
 authors = [{name="Caiden Squizzato", email="squizzcaiden@gmail.com"},]
 description = "A simple QR code generator"
 readme = "README.md"
