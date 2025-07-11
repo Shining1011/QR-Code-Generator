@@ -1,0 +1,11 @@
+# Config File
+
+[project]
+name = "QR Code Generator"
+version = "1.0.0"
+authors = [{name="Caiden Squizzato", email="squizzcaiden@gmail.com"},]
+description = "A simple QR code generator"
+readme = "README.md"
+
+[project.urls]
+Homepage = "https://github.com/Shining1101/QR-Code-Generator"
