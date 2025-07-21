@@ -1,0 +1,48 @@
+Problem Aimed to Solve:
+The problem aimed to solve with this project, is to give access to a free, dynamic, working QR code generator 
+
+
+Tasks:
+ - GUI: a simple user interface with:
+		- 2 togglable options data type and ecc 
+		- textbox for user input
+		- generate QR code button
+		- image box to display the qr code
+		- 2 togglable options for file format, and QR Size
+		- download button
+		- download bar
+ - QR Code generation:
+		- generating static characteristics of a qr code based on version, ecc, format, etc...
+		- Taking user data and encoding based on its data type and ecc
+		- generating redundant data for data loss level
+		- Selecting correct qr version for size of user data up to version 10
+		- inserting encoded user data and redundant data into QR code
+		- adding mask to QR Code
+ - Image creation: 
+		- using qr code matrix to generate an rgb image of certain size (example: 296x296, 512x512)
+		- converting qr code to intended file format
+ - User Download:
+		- download complete qr code to users downloads folder when prompted
+		
+
+Inputs:
+ - data type: numeric, alphanumeric, byte, kanji
+ - error correction capability: L = 7%, M = 15%, Q = 25%, H = 30%
+ - data: Minimum 1 byte, Maximum version 10 L QR
+
+Outputs:
+ - scannable QR
+
+Data Types:
+ 	- class for qr code which takes in: 
+				- value of data type of float, string, bytes
+				- data type as an enum, 
+				- and ecc as an Enum
+	- The QR code values will be held a 2 dimensional Boolean array
+
+Stack:
+- Languages: Python 3.11, YAML
+- Libraries: tkinter, numpy, yaml
+
+Tools:
+- VS Code with extensions

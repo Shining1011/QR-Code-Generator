@@ -1,0 +1,244 @@
+QR_VERSION_CAPACITIES:
+  1:
+    L:
+      error_correction_block_information:
+        data_codewords_total: 19 
+        ec_codeword_per_block: 7
+        group_1:
+          block_num: 1
+          data_codeword_num: 19
+        group_2:
+          block_num: 0
+          data_codeword_num: 0
+      data_mode:
+        numeric: 41
+        alphanumeric: 25
+        byte: 17
+        kanji: 10
+    M:
+      error_correction_block_information:
+        data_codewords_total: 16
+        ec_codeword_per_block: 
+        group_1:
+          block_num:
+          data_codeword_num:
+        group_2:
+          block_num:
+          data_codeword_num:
+      data_mode:
+        numeric: 34
+        alphanumeric: 20
+        byte: 14
+        kanji: 8
+    Q:
+      data_codewords_total: 13
+      numeric: 27
+      alphanumeric: 16
+      byte: 11
+      kanji: 7
+    H:
+      data_codewords_total: 9
+      numeric: 17
+      alphanumeric: 10
+      byte: 7
+      kanji: 4
+  2:
+    L:
+      data_codewords_total: 34
+      numeric: 77
+      alphanumeric: 47
+      byte: 32
+      kanji: 20
+    M:
+      data_codewords_total: 28
+      numeric: 63
+      alphanumeric: 38
+      byte: 26
+      kanji: 16
+    Q:
+      data_codewords_total: 22
+      numeric: 48
+      alphanumeric: 29
+      byte: 20
+      kanji: 12
+    H:
+      data_codewords_total: 16
+      numeric: 34
+      alphanumeric: 20
+      byte: 14
+      kanji: 8
+  3:
+    L:
+      data_codewords_total: 55
+      numeric: 127
+      alphanumeric: 77
+      byte: 53
+      kanji: 32
+    M:
+      data_codewords_total: 44
+      numeric: 101
+      alphanumeric: 61
+      byte: 42
+      kanji: 26
+    Q:
+      data_codewords_total: 34
+      numeric: 77
+      alphanumeric: 47
+      byte: 32
+      kanji: 20
+    H:
+      data_codewords_total: 26
+      numeric: 58
+      alphanumeric: 35
+      byte: 24
+      kanji: 15
+  4:
+    L:
+      data_codewords_total: 80
+      numeric: 187
+      alphanumeric: 114
+      byte: 78
+      kanji: 48
+    M:
+      data_codewords_total: 64
+      numeric: 149
+      alphanumeric: 90
+      byte: 62
+      kanji: 38
+    Q:
+      data_codewords_total: 48
+      numeric: 111
+      alphanumeric: 67
+      byte: 46
+      kanji: 28
+    H:
+      data_codewords_total: 36
+      numeric: 82
+      alphanumeric: 50
+      byte: 34
+      kanji: 21
+  5:
+    L:
+      data_codewords_total: 108
+      numeric: 255
+      alphanumeric: 154
+      byte: 106
+      kanji: 65
+    M:
+      data_codewords_total: 86
+      numeric: 202
+      alphanumeric: 122
+      byte: 84
+      kanji: 52
+    Q:
+      data_codewords_total: 62
+      numeric: 144
+      alphanumeric: 87
+      byte: 60
+      kanji: 37
+    H:
+      data_codewords_total: 46
+      numeric: 106
+      alphanumeric: 64
+      byte: 44
+      kanji: 27
+  6:
+    L:
+      data_codewords_total: 136
+      numeric: 322
+      alphanumeric: 195
+      byte: 134
+      kanji: 82
+    M:
+      data_codewords_total: 108
+      numeric: 255
+      alphanumeric: 154
+      byte: 106
+      kanji: 65
+    Q:
+      data_codewords_total: 76
+      numeric: 178
+      alphanumeric: 108
+      byte: 74
+      kanji: 45
+    H:
+      data_codewords_total: 60
+      numeric: 139
+      alphanumeric: 84
+      byte: 58
+      kanji: 36
+  7:
+    L:
+      data_codewords_total: 156
+      numeric: 370
+      alphanumeric: 224
+      byte: 154
+      kanji: 95
+    M:
+      data_codewords_total: 124
+      numeric: 293
+      alphanumeric: 178
+      byte: 122
+      kanji: 75
+    Q:
+      data_codewords_total: 88
+      numeric: 207
+      alphanumeric: 125
+      byte: 86
+      kanji: 53
+    H:
+      data_codewords_total: 66
+      numeric: 154
+      alphanumeric: 93
+      byte: 64
+      kanji: 39
+  8:
+    L:
+      data_codewords_total: 194
+      numeric: 461
+      alphanumeric: 279
+      byte: 192
+      kanji: 118
+    M:
+      data_codewords_total: 154
+      numeric: 365
+      alphanumeric: 221
+      byte: 152
+      kanji: 93
+    Q:
+      data_codewords_total: 110
+      numeric: 259
+      alphanumeric: 157
+      byte: 108
+      kanji: 66
+    H:
+      data_codewords_total: 86
+      numeric: 202
+      alphanumeric: 122
+      byte: 84
+      kanji: 52
+  9:
+    L:
+      data_codewords_total: 232
+      numeric: 552
+      alphanumeric: 335
+      byte: 230
+      kanji: 141
+    M:
+      data_codewords_total: 182
+      numeric: 432
+      alphanumeric: 262
+      byte: 180
+      kanji: 111
+    Q:
+      data_codewords_total: 132
+      numeric: 312
+      alphanumeric: 189
+      byte: 130
+      kanji: 80
+    H:
+      data_codewords_total: 100
+      numeric: 235
+      alphanumeric: 143
+      byte: 98
+      kanji: 60
