@@ -21,8 +21,8 @@ if __name__ == "__main__":
         poly_gen.create_generator_polynomials()
         poly_gen.push_to_constants()
         del poly_gen
-    
-    qr_code = qr.QR_Code(const.ecc_level.M, const.data_mode.ALPHANUMERIC,"HELLO WORLD HELLO WORLD")
+
+    qr_code = qr.QR_Code(const.ecc_level.Q, const.data_mode.ALPHANUMERIC,"HELLO WORLD HELLO WORLD")
     qr_code.create_finder_pattern()
     qr_code.create_seperator()
     qr_code.create_timing_pattern()

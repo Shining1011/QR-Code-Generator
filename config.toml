@@ -11,5 +11,5 @@ readme = "README.md"
 Homepage = "https://github.com/Shining1101/QR-Code-Generator"
 
 [qr_code]
-max_version_size = 1
-max_ecc_generator_poly = 17
+max_version_size = 2
+max_ecc_generator_poly = 28

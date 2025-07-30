@@ -15,8 +15,6 @@ except yaml.YAMLError as e:
     print(f"Error parsing YAML: {e} in " + str(__file__))
     exit_program()
 
-
-
 class QR_Code:
     def __init__(self, ecc: const.ecc_level, data_mode: const.data_mode, data):
         self.ecc = ecc
@@ -24,16 +22,90 @@ class QR_Code:
         self.data = data
         self.ver = self.find_version()
         self.size = const.QR_VERSION_SIZES[self.ver]
+        self.encoder = Encoder(ecc=self.ecc, ver=self.ver, data_mode=self.data_mode, data=self.data)
+        self.alignment_module_locations = version_capacity_file[self.ver]["template_information"]
+        self.data_str = self.encoder.get_data_str()
+        self.data_placed = 0
+        # print(self.data_str)
+        # print(len(self.data_str))
+
         # index 0 = y
         # index 1 = x
         self.qr_code = np.full((self.size,self.size), None)
-        self.alignment_module_locations = version_capacity_file[self.ver]["template_information"]
+
         # index 0 = top left corner, 
         # index 1 = top right corner, 
         # index 2 = bottom left corner
         # index 3 = bottom right corner
         self.corners = np.array([np.array([0,0]),np.array([0,self.size-1]),np.array([self.size-1,0]),np.array([self.size-1,self.size-1])])
     
+    def place_data(self):
+        temp_corner = self.corners.copy()[3]
+        is_upward = True
+        # Before timing patterns
+        for column in range(0, self.size-8, 2):
+            for row in range(0, self.size, 4):
+                if is_upward:
+                    self.insert_data_upward(temp_corner-np.array([row, column]))
+                else:
+                    self.insert_data_downward(temp_corner-np.array([row, column]))
+            is_upward = not is_upward
+        # After timing pattern
+        is_upward = not is_upward
+        for column in range(self.size-8, self.size, 2):
+            for row in range(0, self.size, 4):
+                if is_upward:
+                    self.insert_data_upward(temp_corner-np.array([row, column]))
+                else:
+                    self.insert_data_downward(temp_corner-np.array([row, column]))
+            is_upward = not is_upward
+                
+    def insert_data_upward(self, start: np.array):
+        for y in range(4):
+            if self.qr_code[start[0]-y][start[1]] == None:
+                self.qr_code[start[0]-y][start[1]] = self.data_str[self.data_placed]
+                self.data_placed += 1
+            if self.qr_code[start[0]-y][start[1]-1] == None:
+                self.qr_code[start[0]-y][start[1]-1] = self.data_str[self.data_placed]
+                self.data_placed += 1
+    
+    def insert_data_downward(self, start: np.array):
+        for y in range(4, 0, -1):
+            if self.qr_code[start[0]-y][start[1]] == None:
+                self.qr_code[start[0]-y][start[1]] = self.data_str[self.data_placed]
+                self.data_placed += 1
+            if self.qr_code[start[0]-y][start[1]-1] == None:
+                self.qr_code[start[0]-y][start[1]-1] = self.data_str[self.data_placed]
+                self.data_placed += 1
+
+    def print_qr(self):
+        for i in range(len(self.qr_code)):
+            for k in range(len(self.qr_code[i])):
+                match self.qr_code[i][k]:
+                    case True:
+                        print("1", end=" ")
+                    case False:
+                        print("0", end=" ")
+                    case None:
+                        print("*", end=" ")
+                    case _:
+                        print(str(self.qr_code[i][k]), end=" ")
+            print("")
+        
+    def find_version(self):
+        if self.data_mode == const.data_mode.NUMERIC:
+            byte_len = len(str(self.data))
+        else:
+            byte_len = len(self.data)
+
+        for v in version_capacity_file:
+            if byte_len < version_capacity_file[v][self.ecc.value["name"]]["data_mode"][self.data_mode.value["name"]]:
+                return v
+        print("Error value inputted is too large")
+        exit_program()
+
+    #region Create QR Code Template
+
     def create_finder_pattern(self):
         temp_corners = self.corners.copy()
         temp_corners[1] += np.array([0,-len(const.QR_FINDER_PATTERN)+1])
@@ -110,66 +182,7 @@ class QR_Code:
             else:
                 print("need to create function for format reservation ver 7 and higher")
 
-    def place_data(self):
-        temp_corner = self.corners.copy()[3]
-        is_upward = True
-        # Before timing patterns
-        for column in range(0, self.size-8, 2):
-            for row in range(0, self.size, 4):
-                if is_upward:
-                    self.insert_data_upward(temp_corner-np.array([row, column]))
-                else:
-                    self.insert_data_downward(temp_corner-np.array([row, column]))
-            is_upward = not is_upward
-        # After timing pattern
-        is_upward = not is_upward
-        for column in range(self.size-8, self.size, 2):
-            for row in range(0, self.size, 4):
-                if is_upward:
-                    self.insert_data_upward(temp_corner-np.array([row, column]))
-                else:
-                    self.insert_data_downward(temp_corner-np.array([row, column]))
-            is_upward = not is_upward
-                
-    def insert_data_upward(self, start: np.array):
-        for y in range(4):
-            if self.qr_code[start[0]-y][start[1]] == None:
-                self.qr_code[start[0]-y][start[1]] = "u"
-            if self.qr_code[start[0]-y][start[1]-1] == None:
-                self.qr_code[start[0]-y][start[1]-1] = "u"
-    
-    def insert_data_downward(self, start: np.array):
-        for y in range(4, 0, -1):
-            if self.qr_code[start[0]-y][start[1]] == None:
-                self.qr_code[start[0]-y][start[1]] = "d"
-            if self.qr_code[start[0]-y][start[1]-1] == None:
-                self.qr_code[start[0]-y][start[1]-1] = "d"
-
-    def print_qr(self):
-        for i in range(len(self.qr_code)):
-            for k in range(len(self.qr_code[i])):
-                match self.qr_code[i][k]:
-                    case True:
-                        print("1", end=" ")
-                    case False:
-                        print("0", end=" ")
-                    case None:
-                        print("*", end=" ")
-                    case _:
-                        print(str(self.qr_code[i][k]), end=" ")
-            print("")
-        
-    def find_version(self):
-        if self.data_mode == const.data_mode.NUMERIC:
-            byte_len = len(str(self.data))
-        else:
-            byte_len = len(self.data)
-
-        for v in version_capacity_file:
-            if byte_len < version_capacity_file[v][self.ecc.value["name"]]["data_mode"][self.data_mode.value["name"]]:
-                return v
-        print("Error value inputted is too large")
-        exit_program()
+    #endregion
 
 class Encoder:
     def __init__(self, ecc: const.ecc_level, ver: int, data_mode: const.data_mode, data):
@@ -177,6 +190,7 @@ class Encoder:
         self.ver = ver
         self.data_mode = data_mode
         self.data = data
+        self.required_remainder_bits = version_capacity_file[self.ver]["required_reminder_bits"]
         self.ecc_per_block = version_capacity_file[self.ver][self.ecc.value["name"]]["error_correction_block_information"]["ec_codeword_per_block"]
         self.bits_total = version_capacity_file[self.ver][self.ecc.value["name"]]["error_correction_block_information"]["data_codewords_total"] * 8
         self.block_num_g1 = version_capacity_file[self.ver][self.ecc.value["name"]]["error_correction_block_information"]["group_1"]["block_num"]
@@ -202,7 +216,8 @@ class Encoder:
         self.gen_poly = Polynomial(generator_polynomials.GENERATOR_POLYNOMIALS[self.ecc_per_block-1])
         self.error_correction_codewords = []
         self.fill_groups()
-        self.create_ecc()
+        self.create_ecc(group=self.group_1)
+        self.create_ecc(group=self.group_2)
 
     def get_alphanumeric(self):
         self.data = self.data.upper()
@@ -238,7 +253,7 @@ class Encoder:
             return format(0, '04b')
 
     def get_padding(self):
-        padding = 0
+        padding = ""
         bits_used = len(self.data_mode.value["indicator"]) + len(self.character_count_indicator)
         for b in self.data:
             bits_used += len(b)
@@ -246,6 +261,7 @@ class Encoder:
         if bits_used % 8 != 0:
             padding = format(0, '0' + str(8 - bits_used % 8) + 'b')
         count = 0
+        
         while bits_used + len(padding) < self.bits_total:
             count %= 2
             padding += const.PADDING_BYTES[count]
@@ -262,23 +278,23 @@ class Encoder:
             for codeword in range(len(self.group_1[block])):
                 self.group_1[block][codeword] = data_str[count*8:(count+1)*8]
                 count += 1
-                
-        for block in self.group_2:
-            for codeword in block:
-                codeword = data_str[count*8:(count+1)*8]
+        count = 0
+        for block in range(len(self.group_2)):
+            for codeword in range(len(self.group_2[block])):
+                self.group_2[block][codeword] = data_str[count*8:(count+1)*8]
                 count += 1
 
-    def create_ecc(self):
-        for block in range(len(self.group_1)):
+    def create_ecc(self, group: np.array):
+        for block in range(len(group)):
             ecc = []
             message_poly = []
-            for codeword in self.group_1[block]:
+            for codeword in group[block]:
                 message_poly.append(const.coef_to_alpha(int(codeword,2)))
             for i in range(self.ecc_per_block):
                 message_poly.append(np.nan)
             message_poly.reverse()
             message_poly = Polynomial(np.array(message_poly))
-            for i in range(self.data_codeword_num_g1):
+            for i in range(self.ecc_per_block):
                 lead_term = np.nan
                 lead_term_index = np.nan
                 for k in range(len(message_poly.polynomial)):
@@ -294,36 +310,35 @@ class Encoder:
                 temp_gen_poly.poly_multiply(temp_lead_poly)
                 message_poly.poly_xor(temp_gen_poly.polynomial)
             for p in message_poly.polynomial:
-                ecc.append(const.alpha_to_coef(p))
+                if np.isnan(p):
+                    ecc.append(format(0, "08b"))
+                else:
+                    p = format(int(const.alpha_to_coef(p)), "08b")
+                    ecc.append(p)
             self.error_correction_codewords.append(ecc)
 
-        for block in range(len(self.group_2)):
-            ecc = []
-            message_poly = []
-            for codeword in self.group_2[block]:
-                message_poly.append(const.coef_to_alpha(int(codeword,2)))
-            for i in range(self.ecc_per_block):
-                message_poly.append(np.nan)
-            message_poly.reverse()
-            message_poly = Polynomial(np.array(message_poly))
-            for i in range(self.data_codeword_num_g2):
-                lead_term = np.nan
-                lead_term_index = np.nan
-                for k in range(len(message_poly.polynomial)):
-                    if not np.isnan(message_poly.polynomial[-k]):
-                        lead_term = int(message_poly.polynomial[-k])
-                        lead_term_index = k
-                        break
-                temp_lead_poly = np.full(len(message_poly.polynomial) - len(self.gen_poly.polynomial) - lead_term_index +2, np.nan)
-                for k in range(lead_term_index):
-                    np.append(temp_lead_poly, [np.nan])
-                temp_lead_poly[-1] = lead_term
-                temp_gen_poly = Polynomial(self.gen_poly.polynomial)
-                temp_gen_poly.poly_multiply(temp_lead_poly)
-                message_poly.poly_xor(temp_gen_poly.polynomial)
-            for p in message_poly.polynomial:
-                ecc.append(const.alpha_to_coef(p))
-            self.error_correction_codewords.append(ecc)
+    def get_data_str(self):
+        data_str_bin = ""
+        block_total = self.block_num_g1 + self.block_num_g2
+        group_3 = [self.group_1, self.group_2]
+        if  self.data_codeword_num_g1 > self.data_codeword_num_g2:
+            max_data_per_block = self.data_codeword_num_g1
+        else:
+            max_data_per_block = self.data_codeword_num_g2
+        for d in range(max_data_per_block):
+            for b in range(block_total):
+                for g in range(len(group_3)):
+                    try:
+                        # Fix in future
+                        data_str_bin += str(group_3[g][b][d]).replace("b","").replace("'", "")
+                    except IndexError:
+                        pass
+        for ecc in range(self.ecc_per_block):
+            for b in range(block_total):
+                data_str_bin += self.error_correction_codewords[b][ecc]
+        if self.required_remainder_bits > 0:
+            data_str_bin += format(0, "0" + str(self.required_remainder_bits) + "b")
+        return data_str_bin
 
 class Generator_Polynomial:
 
