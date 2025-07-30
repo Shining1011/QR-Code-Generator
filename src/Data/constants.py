@@ -1,26 +1,49 @@
 from enum import Enum
+from QR_Code_Generator import GenerateQR as qr
+import galois
 
 class data_mode(Enum):
-    NUMERIC = "numeric"
-    ALPHANUMERIC = "alphanumeric"
-    BYTE = "byte"
-    KANJI = "kanji"
+    NUMERIC = {"name" : "numeric", 
+               "indicator" : "0001"}
+    ALPHANUMERIC = {"name" : "alphanumeric",
+                    "indicator" : "0010"}
+    BYTE = {"name" : "byte", 
+            "indicator" : "0100"}
+    KANJI = {"name" : "kanji", 
+            "indicator" : "1000"}
 
 class ecc_level(Enum):
-    L = ["L", 0.07]
-    M = ["M", 0.15]
-    Q = ["Q", 0.25]
-    H = ["H", 0.3]
+    L = {"name" : "L", 
+               "indicator" : "01"}
+    M = {"name" : "M", 
+               "indicator" : "00"}
+    Q = {"name" : "Q", 
+               "indicator" : "11"}
+    H = {"name" : "H", 
+               "indicator" : "10"}
 
-QR_CORNER = [
-    [True,True,True,True,True,True,True],
-    [True,False,False,False,False,False,True],
-    [True,False,True,True,True,False,True],
-    [True,False,True,True,True,False,True],
-    [True,False,True,True,True,False,True],
-    [True,False,False,False,False,False,True],
-    [True,True,True,True,True,True,True]
-    ]  
+# True is black
+# False is white
+
+QR_SEPERATOR = (False,False,False,False,False,False,False,False)
+
+QR_ALIGNMENT_PATTERN = (
+    (True,True,True,True,True),
+    (True,False,False,False,True),
+    (True,False,True,False,True),
+    (True,False,False,False,True),
+    (True,True,True,True,True)
+    )
+
+QR_FINDER_PATTERN = (
+    (True,True,True,True,True,True,True),
+    (True,False,False,False,False,False,True),
+    (True,False,True,True,True,False,True),
+    (True,False,True,True,True,False,True),
+    (True,False,True,True,True,False,True),
+    (True,False,False,False,False,False,True),
+    (True,True,True,True,True,True,True)
+    )  
 
 QR_VERSION_SIZES = {
     1:21,
@@ -32,14 +55,6 @@ QR_VERSION_SIZES = {
     7:45,
     8:49,
     9:53
-    }
-
-MODE_INDICATOR = {
-    data_mode.NUMERIC:"0001",
-    data_mode.ALPHANUMERIC:"0010",
-    data_mode.BYTE:"0100",
-    data_mode.KANJI:"1000",
-    data_mode.ECI:"0111"
     }
 
 ALPHANUMERIC_TO_INT = {
@@ -90,3 +105,22 @@ ALPHANUMERIC_TO_INT = {
     ":": 44
 }
 
+PADDING_BYTES = ('11101100', '00010001')
+
+BYTE_WISE_MODULO = 285
+
+GALOIS_FIELD_MODULO = 255
+
+GALOIS_FIELD_256 = galois.GF(2**8)
+
+def alpha_to_coef(exp: int):
+        result = 1
+        exp = int(exp)
+        for i in range(exp):
+                result *= GALOIS_FIELD_256.primitive_element
+                if result >= 256:
+                    result ^= BYTE_WISE_MODULO
+        return result
+
+def coef_to_alpha(coef: int):
+    return GALOIS_FIELD_256(coef).log(GALOIS_FIELD_256.primitive_element)
