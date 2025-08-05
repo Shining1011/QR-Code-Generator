@@ -1,9 +1,12 @@
 from QR_Code_Generator import GenerateQR as qr
+from QR_Code_Generator import GUI as gui
 from Data import constants as const
 from Data import generator_polynomials as gen_poly
 import toml
 from sys import exit as exit_program
 import numpy as np
+import turtle as trt
+
 
 try:
     with open("config.toml", 'r') as file:
@@ -23,17 +26,12 @@ if __name__ == "__main__":
         del poly_gen
 
     qr_code = qr.QR_Code(const.ecc_level.Q, const.data_mode.ALPHANUMERIC,"HELLO WORLD HELLO WORLD")
-    qr_code.create_finder_pattern()
-    qr_code.create_seperator()
-    qr_code.create_timing_pattern()
-    qr_code.create_alignment_pattern()
-    qr_code.create_dark_module()
-    qr_code.reserve_formatting_location()
-    qr_code.place_data()
-    qr_code.print_qr()
+    print(qr_code.mask)
+    # qr_code.print_qr(qr_code.qr_code)
 
-    # encoder_check = qr.Encoder(ecc=const.ecc_level.M, ver=1, data_mode=const.data_mode.ALPHANUMERIC, data="HELLO WORLD")
-    # encoder_check.fill_groups()
-    # encoder_check.create_ecc()
-
+    gui = gui.turtle_qr(10)
+    gui.draw_qr(qr=qr_code.qr_code)
+    while True:
+        trt.done()
+        
     
