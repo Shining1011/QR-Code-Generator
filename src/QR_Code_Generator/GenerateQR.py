@@ -2,7 +2,9 @@ from Data import constants as const
 from Data import generator_polynomials
 import numpy as np
 import yaml
+import math
 from sys import exit as exit_program
+
 
 try:
     with open('./src/Data/VersionCapacity.yaml', 'r') as file:
@@ -26,8 +28,7 @@ class QR_Code:
         self.alignment_module_locations = version_capacity_file[self.ver]["template_information"]
         self.data_str = self.encoder.get_data_str()
         self.data_placed = 0
-        # print(self.data_str)
-        # print(len(self.data_str))
+        self.mask_test_score = np.full(8,0)
 
         # index 0 = y
         # index 1 = x
@@ -38,58 +39,75 @@ class QR_Code:
         # index 2 = bottom left corner
         # index 3 = bottom right corner
         self.corners = np.array([np.array([0,0]),np.array([0,self.size-1]),np.array([self.size-1,0]),np.array([self.size-1,self.size-1])])
-    
+
+        self.create_finder_pattern()
+        self.create_seperator()
+        self.create_timing_pattern()
+        self.create_alignment_pattern()
+        self.create_dark_module()
+        self.reserve_formatting_location()
+        self.place_data()
+        self.mask = self.get_mask()
+        self.qr_code = self.place_formatting(self.mask, self.qr_code)
+        self.qr_code = self.apply_mask(self.mask, self.qr_code)
+
     def place_data(self):
         temp_corner = self.corners.copy()[3]
         is_upward = True
         # Before timing patterns
         for column in range(0, self.size-8, 2):
-            for row in range(0, self.size, 4):
-                if is_upward:
-                    self.insert_data_upward(temp_corner-np.array([row, column]))
-                else:
-                    self.insert_data_downward(temp_corner-np.array([row, column]))
+            if is_upward:
+                self.insert_data_upward(temp_corner-np.array([0, column]))
+            else:
+                self.insert_data_downward(temp_corner-np.array([0, column]))
             is_upward = not is_upward
+            
         # After timing pattern
         is_upward = not is_upward
         for column in range(self.size-8, self.size, 2):
-            for row in range(0, self.size, 4):
-                if is_upward:
-                    self.insert_data_upward(temp_corner-np.array([row, column]))
-                else:
-                    self.insert_data_downward(temp_corner-np.array([row, column]))
+            if is_upward:
+                self.insert_data_upward(temp_corner-np.array([0, column]))
+            else:
+                self.insert_data_downward(temp_corner-np.array([0, column]))
             is_upward = not is_upward
                 
     def insert_data_upward(self, start: np.array):
-        for y in range(4):
+        # Use true and false to differentiate data for masking
+        for y in range(self.size):
+            print([start[0]-y, start[1]])
             if self.qr_code[start[0]-y][start[1]] == None:
-                self.qr_code[start[0]-y][start[1]] = self.data_str[self.data_placed]
+                self.qr_code[start[0]-y][start[1]] = self.data_str[self.data_placed] == '1'
                 self.data_placed += 1
             if self.qr_code[start[0]-y][start[1]-1] == None:
-                self.qr_code[start[0]-y][start[1]-1] = self.data_str[self.data_placed]
+                self.qr_code[start[0]-y][start[1]-1] = self.data_str[self.data_placed] == '1'
                 self.data_placed += 1
     
     def insert_data_downward(self, start: np.array):
-        for y in range(4, 0, -1):
+        # Use true and false to differentiate data for masking
+        for y in range(self.size-1, -1, -1):
+            print(y)
+            print([start[0]-y, start[1]])
             if self.qr_code[start[0]-y][start[1]] == None:
-                self.qr_code[start[0]-y][start[1]] = self.data_str[self.data_placed]
+                self.qr_code[start[0]-y][start[1]] = self.data_str[self.data_placed] == '1'
+                # self.qr_code[start[0]-y][start[1]] = self.data_placed 
                 self.data_placed += 1
             if self.qr_code[start[0]-y][start[1]-1] == None:
-                self.qr_code[start[0]-y][start[1]-1] = self.data_str[self.data_placed]
+                self.qr_code[start[0]-y][start[1]-1] = self.data_str[self.data_placed] == '1'
+                # self.qr_code[start[0]-y][start[1]-1] = self.data_placed 
                 self.data_placed += 1
 
-    def print_qr(self):
-        for i in range(len(self.qr_code)):
-            for k in range(len(self.qr_code[i])):
-                match self.qr_code[i][k]:
+    def print_qr(self, qr: np.array):
+        for i in range(len(qr)):
+            for k in range(len(qr[i])):
+                match qr[i][k]:
                     case True:
-                        print("1", end=" ")
+                        print("1", end="  ")
                     case False:
-                        print("0", end=" ")
+                        print("0", end="  ")
                     case None:
-                        print("*", end=" ")
+                        print("*", end="  ")
                     case _:
-                        print(str(self.qr_code[i][k]), end=" ")
+                        print(str(self.qr_code[i][k]), end="  ")
             print("")
         
     def find_version(self):
@@ -103,6 +121,194 @@ class QR_Code:
                 return v
         print("Error value inputted is too large")
         exit_program()
+
+    def place_formatting(self, mask_ver: const.mask_level, qr: np.array):
+        # Needs improvement
+        format_data = const.FORMAT_INFO_STRINGS[(self.ecc, mask_ver)]
+        format_data += format_data
+        for c in range(len(self.corners)):
+            offset = np.array([8,0])
+            for i in range(9):
+                if qr[self.corners[0][0]+offset[0]][self.corners[0][1]+offset[1]+i] == "f":
+                    qr[self.corners[0][0]+offset[0]][self.corners[0][1]+offset[1]+i] = format_data[0]
+                    format_data = format_data[1:]
+            offset = np.array([7,8])
+            for i in range(8):
+                if qr[self.corners[0][0]+offset[0]-i][self.corners[0][1]+offset[1]] == "f":
+                    qr[self.corners[0][0]+offset[0]-i][self.corners[0][1]+offset[1]] = format_data[0]
+                    format_data = format_data[1:]
+            offset = np.array([0,8])
+            for i in range(7):
+                if qr[self.corners[2][0]+offset[0]-i][self.corners[2][1]+offset[1]] == "f":
+                    qr[self.corners[2][0]+offset[0]-i][self.corners[2][1]+offset[1]] = format_data[0]
+                    format_data = format_data[1:]
+            offset = np.array([8,-7])
+            for i in range(8):
+                if qr[self.corners[1][0]+offset[0]][self.corners[1][1]+offset[1]+i] == "f":
+                    qr[self.corners[1][0]+offset[0]][self.corners[1][1]+offset[1]+i] = format_data[0]
+                    format_data = format_data[1:]
+        return qr
+
+    def apply_mask(self, mask_ver: const.mask_level, qr: np.array):
+        for y in range(len(qr)):
+            for x in range(len(qr[y])):
+                # print(qr[y][x])
+                if mask_ver.value["formula"](y,x) and (qr[y][x] == True or qr[y][x] == False):
+                    qr[y][x] = str(int(not qr[y][x]))
+                else:
+                    qr[y][x] = str(int(qr[y][x]))
+        return qr
+
+    def get_mask(self):
+        # generate format & ver for all 8 masks then loop and test
+        for mask in const.mask_level:
+            qr = self.qr_code.copy()
+            qr = self.place_formatting(mask, qr)
+            qr = self.apply_mask(mask, qr)
+            self.test_mask_1(mask, qr)
+            self.test_mask_2(mask, qr)
+            self.test_mask_3(mask, qr)
+            self.test_mask_4(mask, qr)
+        best_score = [0,0]
+        for s_ind in range(len(self.mask_test_score)):
+            if self.mask_test_score[s_ind] < best_score[0]:
+                best_score[0] = self.mask_test_score[s_ind]
+                best_score[1] = s_ind
+        match best_score[1]:
+            case 0:
+                return const.mask_level.VER_0
+            case 1:
+                return const.mask_level.VER_1
+            case 2:
+                return const.mask_level.VER_2
+            case 3:
+                return const.mask_level.VER_3
+            case 4:
+                return const.mask_level.VER_4
+            case 5:
+                return const.mask_level.VER_5
+            case 6:
+                return const.mask_level.VER_6
+            case 7:
+                return const.mask_level.VER_7
+
+    def test_mask_1(self, mask_ver: const.mask_level, temp_qr: np.array):
+        # Cutoff is the 5 same blocks cutoff, but adjusted for the code
+        cutoff = 4
+        penalty = 0
+        same_count = 0
+        last_module = None
+        for y in range(len(temp_qr)):
+            for x in range(len(temp_qr[y])):
+                if not temp_qr[y][x] == last_module:
+                    if same_count >= cutoff:
+                        penalty += same_count-1
+                    same_count = 0
+                else:
+                    same_count += 1
+                last_module = temp_qr[y][x]
+            if same_count >= cutoff:
+                penalty += same_count-1
+            same_count = 0
+        
+        same_count = 0
+        last_module = None
+        for x in range(len(temp_qr)):
+            for y in range(len(temp_qr[x])):
+                if not temp_qr[y][x] == last_module:
+                    if same_count >= cutoff:
+                        penalty += same_count-2
+                    same_count = 0
+                else:
+                    same_count += 1
+                last_module = temp_qr[y][x]
+            if same_count >= cutoff:
+                penalty += same_count-1
+            same_count = 0
+        self.mask_test_score[int(mask_ver.value["indicator"],2)] += penalty
+
+    def test_mask_2(self, mask_ver: const.mask_level, temp_qr: np.array):
+        penalty = 0
+        for y in range(len(temp_qr)-1):
+            for x in range(len(temp_qr[y])-1):
+                white = 0
+                black = 0
+                if temp_qr[y][x] == "1":
+                    black += 1
+                else:
+                    white += 1
+
+                if temp_qr[y][x+1] == "1":
+                    black += 1
+                else:
+                    white += 1
+
+                if temp_qr[y+1][x] == "1":
+                    black += 1
+                else:
+                    white += 1
+
+                if temp_qr[y+1][x+1] == "1":
+                    black += 1
+                else:
+                    white += 1
+                
+                if white == 4 or black == 4:
+                    penalty += 3
+        self.mask_test_score[int(mask_ver.value["indicator"],2)] += penalty  
+
+    def test_mask_3(self, mask_ver: const.mask_level, temp_qr: np.array):
+        penalty = 0
+        for y in range(len(temp_qr)):
+            cur_pattern = []
+            for i in range(len(const.MASK_TEST_3)):
+                cur_pattern.append(temp_qr[y][i])
+            for x in range(len(temp_qr[y])-len(const.MASK_TEST_3)):
+                if cur_pattern == list(const.MASK_TEST_3):
+                    penalty += 40
+                if cur_pattern == list(const.MASK_TEST_3_REVERSED):
+                    penalty += 40
+                cur_pattern = cur_pattern[1:]
+                cur_pattern.append(temp_qr[y][x+len(const.MASK_TEST_3)])
+            if cur_pattern == list(const.MASK_TEST_3):
+                penalty += 40
+            if cur_pattern == list(const.MASK_TEST_3_REVERSED):
+                penalty += 40
+
+        for x in range(len(temp_qr)):
+            cur_pattern = []
+            for i in range(len(const.MASK_TEST_3)):
+                cur_pattern.append(temp_qr[i][x])
+            for y in range(len(temp_qr[x])-len(const.MASK_TEST_3)):
+                if cur_pattern == list(const.MASK_TEST_3):
+                    penalty += 40
+                if cur_pattern == list(const.MASK_TEST_3_REVERSED):
+                    penalty += 40
+                cur_pattern = cur_pattern[1:]
+                cur_pattern.append(temp_qr[y+len(const.MASK_TEST_3)][x])
+            if cur_pattern == list(const.MASK_TEST_3):
+                penalty += 40
+            if cur_pattern == list(const.MASK_TEST_3_REVERSED):
+                penalty += 40
+        self.mask_test_score[int(mask_ver.value["indicator"],2)] += penalty  
+
+    def test_mask_4(self, mask_ver: const.mask_level, temp_qr: np.array):
+        penalty = 0
+        black = 0
+        for y in temp_qr:
+            for x in y:
+                if x == "1":
+                    black += 1
+        black_per = math.floor((black/math.pow(len(temp_qr),2))*100)
+        mul_5_low = black_per - black_per%5
+        mul_5_high = mul_5_low + 5
+        mul_5_low = abs(mul_5_low-50)/5
+        mul_5_high = abs(mul_5_high-50)/5
+        if mul_5_low > mul_5_high:
+            penalty += mul_5_high * 10
+        else:
+            penalty += mul_5_low * 10
+        self.mask_test_score[int(mask_ver.value["indicator"],2)] += penalty 
 
     #region Create QR Code Template
 
@@ -139,8 +345,8 @@ class QR_Code:
         temp_corner = self.corners.copy()[0]
         temp_corner += np.array([len(const.QR_SEPERATOR)-2,len(const.QR_SEPERATOR)-2])
         for i in range(self.size-16):
-            self.qr_code[temp_corner[0]+(i+2)][temp_corner[1]] = bool((i+1)%2)
-            self.qr_code[temp_corner[0]][temp_corner[1]+(i+2)] = bool((i+1)%2)
+            self.qr_code[temp_corner[0]+(i+2)][temp_corner[1]] = str((i+1)%2)
+            self.qr_code[temp_corner[0]][temp_corner[1]+(i+2)] = str((i+1)%2)
 
     def create_alignment_pattern(self):
         offset = np.array([-2,-2])
@@ -154,7 +360,7 @@ class QR_Code:
 
     def create_dark_module(self):
         offset = np.array([len(const.QR_FINDER_PATTERN)+1,-len(const.QR_FINDER_PATTERN)])
-        self.qr_code[self.corners[1][1]+offset[1]][self.corners[1][0]+offset[0]] = True
+        self.qr_code[self.corners[1][1]+offset[1]][self.corners[1][0]+offset[0]] = "1"
 
     def reserve_formatting_location(self):
         temp_corners = self.corners.copy()
@@ -192,7 +398,8 @@ class Encoder:
         self.data = data
         self.required_remainder_bits = version_capacity_file[self.ver]["required_reminder_bits"]
         self.ecc_per_block = version_capacity_file[self.ver][self.ecc.value["name"]]["error_correction_block_information"]["ec_codeword_per_block"]
-        self.bits_total = version_capacity_file[self.ver][self.ecc.value["name"]]["error_correction_block_information"]["data_codewords_total"] * 8
+        self.data_total = version_capacity_file[self.ver][self.ecc.value["name"]]["error_correction_block_information"]["data_codewords_total"]
+        self.bits_total = self.data_total * 8
         self.block_num_g1 = version_capacity_file[self.ver][self.ecc.value["name"]]["error_correction_block_information"]["group_1"]["block_num"]
         self.block_num_g2 = version_capacity_file[self.ver][self.ecc.value["name"]]["error_correction_block_information"]["group_2"]["block_num"]
         self.data_codeword_num_g1 = version_capacity_file[self.ver][self.ecc.value["name"]]["error_correction_block_information"]["group_1"]["data_codeword_num"]
@@ -218,6 +425,10 @@ class Encoder:
         self.fill_groups()
         self.create_ecc(group=self.group_1)
         self.create_ecc(group=self.group_2)
+        print(self.error_correction_codewords)
+        for i in self.error_correction_codewords:
+            for h in i:
+                print(hex(int(h,2)))
 
     def get_alphanumeric(self):
         self.data = self.data.upper()
@@ -273,12 +484,12 @@ class Encoder:
         for str in self.data:
             data_str += str
         data_str += self.terminator + self.padding
+        # print("data str: " + data_str)
         count = 0
         for block in range(len(self.group_1)):
             for codeword in range(len(self.group_1[block])):
                 self.group_1[block][codeword] = data_str[count*8:(count+1)*8]
                 count += 1
-        count = 0
         for block in range(len(self.group_2)):
             for codeword in range(len(self.group_2[block])):
                 self.group_2[block][codeword] = data_str[count*8:(count+1)*8]
@@ -290,11 +501,11 @@ class Encoder:
             message_poly = []
             for codeword in group[block]:
                 message_poly.append(const.coef_to_alpha(int(codeword,2)))
-            for i in range(self.ecc_per_block):
+            for i in range(int(self.ecc_per_block)):
                 message_poly.append(np.nan)
             message_poly.reverse()
             message_poly = Polynomial(np.array(message_poly))
-            for i in range(self.ecc_per_block):
+            for i in range(self.data_total):
                 lead_term = np.nan
                 lead_term_index = np.nan
                 for k in range(len(message_poly.polynomial)):
@@ -308,6 +519,10 @@ class Encoder:
                 temp_lead_poly[-1] = lead_term
                 temp_gen_poly = Polynomial(self.gen_poly.polynomial)
                 temp_gen_poly.poly_multiply(temp_lead_poly)
+                # print("Division: " + str(i))
+                # print("temp gen poly: " + str(temp_gen_poly.polynomial))
+                # print("message poly: " + str(message_poly.polynomial))
+                # print("")
                 message_poly.poly_xor(temp_gen_poly.polynomial)
             for p in message_poly.polynomial:
                 if np.isnan(p):
@@ -315,6 +530,7 @@ class Encoder:
                 else:
                     p = format(int(const.alpha_to_coef(p)), "08b")
                     ecc.append(p)
+            ecc.reverse()
             self.error_correction_codewords.append(ecc)
 
     def get_data_str(self):

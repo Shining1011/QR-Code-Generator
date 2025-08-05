@@ -62,55 +62,55 @@
       byte: 7
       kanji: 4
 2:
-    required_reminder_bits: 7
-    template_information: [6, 18]
-    L:
-      error_correction_block_information:
-          data_codewords_total: 34
-          ec_codeword_per_block: 10
-          group_1:
-            block_num: 1
-            data_codeword_num: 34
-          group_2:
-            block_num: 0
-            data_codeword_num: 0
-      data_mode:
-        numeric: 77
-        alphanumeric: 47
-        byte: 32
-        kanji: 20
-    M:
-      
-      error_correction_block_information:
-          data_codewords_total: 28
-          ec_codeword_per_block: 16
-          group_1:
-            block_num: 1
-            data_codeword_num: 28
-          group_2:
-            block_num: 0
-            data_codeword_num: 0
-      data_mode:
-        numeric: 63
-        alphanumeric: 38
-        byte: 26
-        kanji: 16
-    Q:
-      error_correction_block_information:
-          data_codewords_total: 22
-          ec_codeword_per_block: 22
-          group_1:
-            block_num: 1
-            data_codeword_num: 22
-          group_2:
-            block_num: 0
-            data_codeword_num: 0
-      data_mode:
-        numeric: 48
-        alphanumeric: 29
-        byte: 20
-        kanji: 12
-    H:
+  required_reminder_bits: 7
+  template_information: [6, 18]
+  L:
+    error_correction_block_information:
+      data_codewords_total: 34
+      ec_codeword_per_block: 10
+      group_1:
+        block_num: 1
+        data_codeword_num: 34
+      group_2:
+        block_num: 0
+        data_codeword_num: 0
+    data_mode:
+      numeric: 77
+      alphanumeric: 47
+      byte: 32
+      kanji: 20
+  M:
+    
+    error_correction_block_information:
+        data_codewords_total: 28
+        ec_codeword_per_block: 16
+        group_1:
+          block_num: 1
+          data_codeword_num: 28
+        group_2:
+          block_num: 0
+          data_codeword_num: 0
+    data_mode:
+      numeric: 63
+      alphanumeric: 38
+      byte: 26
+      kanji: 16
+  Q:
+    error_correction_block_information:
+        data_codewords_total: 22
+        ec_codeword_per_block: 22
+        group_1:
+          block_num: 1
+          data_codeword_num: 22
+        group_2:
+          block_num: 0
+          data_codeword_num: 0
+    data_mode:
+      numeric: 48
+      alphanumeric: 29
+      byte: 20
+      kanji: 12
+  H:
       error_correction_block_information:
           data_codewords_total: 16
           ec_codeword_per_block: 28
@@ -125,81 +125,195 @@
         alphanumeric: 20
         byte: 14
         kanji: 8
-  # 3:
-  #   L:
-  #     data_codewords_total: 55
-  #     numeric: 127
-  #     alphanumeric: 77
-  #     byte: 53
-  #     kanji: 32
-  #   M:
-  #     data_codewords_total: 44
-  #     numeric: 101
-  #     alphanumeric: 61
-  #     byte: 42
-  #     kanji: 26
-  #   Q:
-  #     data_codewords_total: 34
-  #     numeric: 77
-  #     alphanumeric: 47
-  #     byte: 32
-  #     kanji: 20
-  #   H:
-  #     data_codewords_total: 26
-  #     numeric: 58
-  #     alphanumeric: 35
-  #     byte: 24
-  #     kanji: 15
-  # 4:
-  #   L:
-  #     data_codewords_total: 80
-  #     numeric: 187
-  #     alphanumeric: 114
-  #     byte: 78
-  #     kanji: 48
-  #   M:
-  #     data_codewords_total: 64
-  #     numeric: 149
-  #     alphanumeric: 90
-  #     byte: 62
-  #     kanji: 38
-  #   Q:
-  #     data_codewords_total: 48
-  #     numeric: 111
-  #     alphanumeric: 67
-  #     byte: 46
-  #     kanji: 28
-  #   H:
-  #     data_codewords_total: 36
-  #     numeric: 82
-  #     alphanumeric: 50
-  #     byte: 34
-  #     kanji: 21
-  # 5:
-  #   L:
-  #     data_codewords_total: 108
-  #     numeric: 255
-  #     alphanumeric: 154
-  #     byte: 106
-  #     kanji: 65
-  #   M:
-  #     data_codewords_total: 86
-  #     numeric: 202
-  #     alphanumeric: 122
-  #     byte: 84
-  #     kanji: 52
-  #   Q:
-  #     data_codewords_total: 62
-  #     numeric: 144
-  #     alphanumeric: 87
-  #     byte: 60
-  #     kanji: 37
-  #   H:
-  #     data_codewords_total: 46
-  #     numeric: 106
-  #     alphanumeric: 64
-  #     byte: 44
-  #     kanji: 27
+3:
+  required_reminder_bits: 7
+  template_information: [6, 22]
+  L:
+    error_correction_block_information:
+      data_codewords_total: 55
+      ec_codeword_per_block: 15
+      group_1:
+        block_num: 1
+        data_codeword_num: 55
+      group_2:
+        block_num: 0
+        data_codeword_num: 0
+    data_mode:
+      numeric: 127
+      alphanumeric: 77
+      byte: 53
+      kanji: 32
+  M:
+    error_correction_block_information:
+      data_codewords_total: 44
+      ec_codeword_per_block: 26
+      group_1:
+        block_num: 1
+        data_codeword_num: 44
+      group_2:
+        block_num: 0
+        data_codeword_num: 0
+    data_mode:
+      numeric: 101
+      alphanumeric: 61
+      byte: 42
+      kanji: 26
+  Q:
+    error_correction_block_information:
+      data_codewords_total: 34
+      ec_codeword_per_block: 18
+      group_1:
+        block_num: 2
+        data_codeword_num: 17
+      group_2:
+        block_num: 0
+        data_codeword_num: 0
+    data_mode:
+      numeric: 77
+      alphanumeric: 47
+      byte: 32
+      kanji: 20
+  H:
+    error_correction_block_information:
+      data_codewords_total: 26
+      ec_codeword_per_block: 22
+      group_1:
+        block_num: 2
+        data_codeword_num: 13
+      group_2:
+        block_num: 0
+        data_codeword_num: 0
+    data_mode:
+      numeric: 58
+      alphanumeric: 35
+      byte: 24
+      kanji: 15
+4:
+  required_reminder_bits: 7
+  template_information: [6, 26]
+  L:
+    error_correction_block_information:
+      data_codewords_total: 80
+      ec_codeword_per_block: 20
+      group_1:
+        block_num: 1
+        data_codeword_num: 80
+      group_2:
+        block_num: 0
+        data_codeword_num: 0
+    data_mode:
+      numeric: 187
+      alphanumeric: 114
+      byte: 78
+      kanji: 48
+  M:
+    error_correction_block_information:
+      data_codewords_total: 64
+      ec_codeword_per_block: 18
+      group_1:
+        block_num: 2
+        data_codeword_num: 32
+      group_2:
+        block_num: 0
+        data_codeword_num: 0
+    data_mode:
+      numeric: 149
+      alphanumeric: 90
+      byte: 62
+      kanji: 38
+  Q:
+    error_correction_block_information:
+      data_codewords_total: 48
+      ec_codeword_per_block: 26
+      group_1:
+        block_num: 2
+        data_codeword_num: 24
+      group_2:
+        block_num: 0
+        data_codeword_num: 0
+    data_mode:
+      numeric: 111
+      alphanumeric: 67
+      byte: 46
+      kanji: 28
+  H:
+    error_correction_block_information:
+      data_codewords_total: 36
+      ec_codeword_per_block: 16
+      group_1:
+        block_num: 4
+        data_codeword_num: 9
+      group_2:
+        block_num: 0
+        data_codeword_num: 0
+    data_mode:
+      numeric: 82
+      alphanumeric: 50
+      byte: 34
+      kanji: 21
+5:
+  required_reminder_bits: 7
+  template_information: [6, 30]
+  L:
+    error_correction_block_information:
+      data_codewords_total: 108
+      ec_codeword_per_block: 26
+      group_1:
+        block_num: 1
+        data_codeword_num: 108
+      group_2:
+        block_num: 0
+        data_codeword_num: 0
+    data_mode:
+      numeric: 255
+      alphanumeric: 154
+      byte: 106
+      kanji: 65
+  M:
+    error_correction_block_information:
+      data_codewords_total: 86
+      ec_codeword_per_block: 24
+      group_1:
+        block_num: 2
+        data_codeword_num: 43
+      group_2:
+        block_num: 0
+        data_codeword_num: 0
+    data_mode:
+      numeric: 202
+      alphanumeric: 122
+      byte: 84
+      kanji: 52
+  Q:
+    error_correction_block_information:
+      data_codewords_total: 62
+      ec_codeword_per_block: 18
+      group_1:
+        block_num: 2
+        data_codeword_num: 15
+      group_2:
+        block_num: 2
+        data_codeword_num: 16
+    data_mode:
+      numeric: 144
+      alphanumeric: 87
+      byte: 60
+      kanji: 37
+  H:
+    error_correction_block_information:
+      data_codewords_total: 46
+      ec_codeword_per_block: 22
+      group_1:
+        block_num: 2
+        data_codeword_num: 11
+      group_2:
+        block_num: 2
+        data_codeword_num: 12
+    data_mode:
+      numeric: 106
+      alphanumeric: 64
+      byte: 44
+      kanji: 27
   # 6:
   #   L:
   #     data_codewords_total: 136
