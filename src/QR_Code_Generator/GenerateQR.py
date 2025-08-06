@@ -423,8 +423,8 @@ class Encoder:
         self.gen_poly = Polynomial(generator_polynomials.GENERATOR_POLYNOMIALS[self.ecc_per_block-1])
         self.error_correction_codewords = []
         self.fill_groups()
-        self.create_ecc(group=self.group_1)
-        self.create_ecc(group=self.group_2)
+        self.create_ecc(group=self.group_1, data_num=self.data_codeword_num_g1)
+        self.create_ecc(group=self.group_2, data_num=self.data_codeword_num_g2)
         print(self.error_correction_codewords)
         for i in self.error_correction_codewords:
             for h in i:
@@ -495,17 +495,22 @@ class Encoder:
                 self.group_2[block][codeword] = data_str[count*8:(count+1)*8]
                 count += 1
 
-    def create_ecc(self, group: np.array):
+    def create_ecc(self, group: np.array, data_num: int):
         for block in range(len(group)):
             ecc = []
             message_poly = []
             for codeword in group[block]:
-                message_poly.append(const.coef_to_alpha(int(codeword,2)))
+                if int(codeword,2) == 0:
+                    message_poly.append(np.nan)
+                else:
+                    message_poly.append(const.coef_to_alpha(int(codeword,2)))
             for i in range(int(self.ecc_per_block)):
                 message_poly.append(np.nan)
             message_poly.reverse()
             message_poly = Polynomial(np.array(message_poly))
-            for i in range(self.data_total):
+            print("data total: " + str(data_num))
+            print(self.ver)
+            for i in range(data_num):
                 lead_term = np.nan
                 lead_term_index = np.nan
                 for k in range(len(message_poly.polynomial)):
@@ -519,10 +524,12 @@ class Encoder:
                 temp_lead_poly[-1] = lead_term
                 temp_gen_poly = Polynomial(self.gen_poly.polynomial)
                 temp_gen_poly.poly_multiply(temp_lead_poly)
-                # print("Division: " + str(i))
-                # print("temp gen poly: " + str(temp_gen_poly.polynomial))
-                # print("message poly: " + str(message_poly.polynomial))
-                # print("")
+                print("Division: " + str(i))
+                print("temp gen poly: " + str(temp_gen_poly.polynomial))
+                print("message poly: " + str(message_poly.polynomial))
+                print("")
+                if len(temp_gen_poly.polynomial) > len(message_poly.polynomial):
+                    break
                 message_poly.poly_xor(temp_gen_poly.polynomial)
             for p in message_poly.polynomial:
                 if np.isnan(p):

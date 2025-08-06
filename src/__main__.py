@@ -25,7 +25,7 @@ if __name__ == "__main__":
         poly_gen.push_to_constants()
         del poly_gen
 
-    qr_code = qr.QR_Code(const.ecc_level.Q, const.data_mode.ALPHANUMERIC,"HELLO WORLD HELLO WORLD")
+    qr_code = qr.QR_Code(const.ecc_level.Q, const.data_mode.ALPHANUMERIC,"https://github.com/Shining1011/QR-Code-Generator")
     print(qr_code.mask)
     # qr_code.print_qr(qr_code.qr_code)
 
