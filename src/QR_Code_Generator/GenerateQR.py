@@ -1,5 +1,6 @@
 from Data import constants as const
 from Data import generator_polynomials
+from PIL import Image, ImageOps
 import numpy as np
 import yaml
 import math
@@ -18,17 +19,28 @@ except yaml.YAMLError as e:
     exit_program()
 
 class QR_Code:
-    def __init__(self, ecc: const.ecc_level, data_mode: const.data_mode, data):
+    def __init__(self, ecc: const.ecc_level, data_mode: const.data_mode, data, ver=None):
         self.ecc = ecc
         self.data_mode = data_mode
         self.data = data
-        self.ver = self.find_version()
+        self.ver = ver
+        if self.ver == None:
+            self.ver = self.find_version()
         self.size = const.QR_VERSION_SIZES[self.ver]
         self.encoder = Encoder(ecc=self.ecc, ver=self.ver, data_mode=self.data_mode, data=self.data)
         self.alignment_module_locations = version_capacity_file[self.ver]["template_information"]
         self.data_str = self.encoder.get_data_str()
         self.data_placed = 0
         self.mask_test_score = np.full(8,0)
+
+        temp_data = self.data_str
+        temp_data_list = []
+        
+        # for k in range(0, len(temp_data), 8):
+        #     temp_data_list.append(temp_data[k:k+8])
+        # print(temp_data_list)
+        # for i in temp_data_list:
+        #     print(hex(int(i,2)))
 
         # index 0 = y
         # index 1 = x
@@ -42,14 +54,21 @@ class QR_Code:
 
         self.create_finder_pattern()
         self.create_seperator()
-        self.create_timing_pattern()
         self.create_alignment_pattern()
+        self.create_timing_pattern()
         self.create_dark_module()
         self.reserve_formatting_location()
         self.place_data()
         self.mask = self.get_mask()
+        self.mask = const.mask_level.VER_2
         self.qr_code = self.place_formatting(self.mask, self.qr_code)
         self.qr_code = self.apply_mask(self.mask, self.qr_code)
+        # print(self.place_data)
+        # print("len of remaining bits" + str(len(self.data_str) - self.data_placed))
+        # self.print_qr(self.qr_code)
+        # print(self.encoder.group_1)
+        # print(self.encoder.group_2)
+        # print(self.encoder.error_correction_codewords)
 
     def place_data(self):
         temp_corner = self.corners.copy()[3]
@@ -74,7 +93,6 @@ class QR_Code:
     def insert_data_upward(self, start: np.array):
         # Use true and false to differentiate data for masking
         for y in range(self.size):
-            print([start[0]-y, start[1]])
             if self.qr_code[start[0]-y][start[1]] == None:
                 self.qr_code[start[0]-y][start[1]] = self.data_str[self.data_placed] == '1'
                 self.data_placed += 1
@@ -85,15 +103,19 @@ class QR_Code:
     def insert_data_downward(self, start: np.array):
         # Use true and false to differentiate data for masking
         for y in range(self.size-1, -1, -1):
-            print(y)
-            print([start[0]-y, start[1]])
-            if self.qr_code[start[0]-y][start[1]] == None:
-                self.qr_code[start[0]-y][start[1]] = self.data_str[self.data_placed] == '1'
-                # self.qr_code[start[0]-y][start[1]] = self.data_placed 
-                self.data_placed += 1
+            try:
+                if self.qr_code[start[0]-y][start[1]] == None:
+                    self.qr_code[start[0]-y][start[1]] = self.data_str[self.data_placed] == '1'
+                    self.data_placed += 1
+            except IndexError:
+                self.print_qr(self.qr_code)
+                print(self.ver)
+                print(self.data_placed)
+                print(self.encoder.group_1)
+                print(self.encoder.group_2)
+                print(self.encoder.error_correction_codewords)
             if self.qr_code[start[0]-y][start[1]-1] == None:
                 self.qr_code[start[0]-y][start[1]-1] = self.data_str[self.data_placed] == '1'
-                # self.qr_code[start[0]-y][start[1]-1] = self.data_placed 
                 self.data_placed += 1
 
     def print_qr(self, qr: np.array):
@@ -101,9 +123,9 @@ class QR_Code:
             for k in range(len(qr[i])):
                 match qr[i][k]:
                     case True:
-                        print("1", end="  ")
+                        print("t", end="  ")
                     case False:
-                        print("0", end="  ")
+                        print("f", end="  ")
                     case None:
                         print("*", end="  ")
                     case _:
@@ -147,6 +169,19 @@ class QR_Code:
                 if qr[self.corners[1][0]+offset[0]][self.corners[1][1]+offset[1]+i] == "f":
                     qr[self.corners[1][0]+offset[0]][self.corners[1][1]+offset[1]+i] = format_data[0]
                     format_data = format_data[1:]
+            
+            if self.ver >= 7:
+                temp_version_info = const.VERSION_INFO_STRINGS[self.ver] + const.VERSION_INFO_STRINGS[self.ver]
+                for i1 in range(6):
+                    for k1 in range(3):
+                        if qr[self.corners[1][0]+i1][self.corners[1][1]-10+k1] == "f":
+                            qr[self.corners[1][0]+i1][self.corners[1][1]-10+k1] = temp_version_info[-1]
+                            temp_version_info = temp_version_info[:-1]
+                for i2 in range(6):
+                    for k2 in range(3):
+                        if qr[self.corners[2][0]-10+k2][self.corners[2][1]+i2] == "f":
+                            qr[self.corners[2][0]-10+k2][self.corners[2][1]+i2] = temp_version_info[-1]
+                            temp_version_info = temp_version_info[:-1]
         return qr
 
     def apply_mask(self, mask_ver: const.mask_level, qr: np.array):
@@ -310,6 +345,17 @@ class QR_Code:
             penalty += mul_5_low * 10
         self.mask_test_score[int(mask_ver.value["indicator"],2)] += penalty 
 
+    def create_image(self, file_type=".png", pixel_size=400):
+        image = Image.new(mode="RGBA", size=(self.size, self.size), color=(255,255,255,255))
+        for y in range(len(self.qr_code)):
+            for x in range(len(self.qr_code[y])):
+                if self.qr_code[y][x] == "1":
+                    image.putpixel((x,y),(0,0,0,255))
+        image = ImageOps.contain(image, (pixel_size,pixel_size), method=Image.Resampling.NEAREST)
+        match file_type:
+            case ".png":
+                image.save("qr_code.png")
+
     #region Create QR Code Template
 
     def create_finder_pattern(self):
@@ -368,26 +414,33 @@ class QR_Code:
         temp_corners[1] += np.array([8,-7])
         temp_corners[2] += np.array([-6,8])
         for c in range(len(temp_corners)):
-            if self.ver < 7:
-                match c:
-                    case 0:
-                        for i in range(9):
-                            if self.qr_code[temp_corners[c][0]-i][temp_corners[c][1]] == None:
-                                self.qr_code[temp_corners[c][0]-i][temp_corners[c][1]] = "f"
-                        for k in range(9):
-                            if self.qr_code[temp_corners[c][0]][temp_corners[c][1]-k] == None:
-                                self.qr_code[temp_corners[c][0]][temp_corners[c][1]-k] = "f"
-                    case 1:
-                        for i in range(8):
-                            if self.qr_code[temp_corners[c][0]][temp_corners[c][1]+i] == None:
-                                self.qr_code[temp_corners[c][0]][temp_corners[c][1]+i] = "f"
-                    case 2:
-                        for i in range(7):
-                            if self.qr_code[temp_corners[c][0]+i][temp_corners[c][1]] == None:
-                                self.qr_code[temp_corners[c][0]+i][temp_corners[c][1]] = "f"
-            else:
-                print("need to create function for format reservation ver 7 and higher")
-
+            match c:
+                case 0:
+                    for i in range(9):
+                        if self.qr_code[temp_corners[c][0]-i][temp_corners[c][1]] == None:
+                            self.qr_code[temp_corners[c][0]-i][temp_corners[c][1]] = "f"
+                    for k in range(9):
+                        if self.qr_code[temp_corners[c][0]][temp_corners[c][1]-k] == None:
+                            self.qr_code[temp_corners[c][0]][temp_corners[c][1]-k] = "f"
+                case 1:
+                    for i in range(8):
+                        if self.qr_code[temp_corners[c][0]][temp_corners[c][1]+i] == None:
+                            self.qr_code[temp_corners[c][0]][temp_corners[c][1]+i] = "f"
+                    if self.ver >= 7:
+                        for i in range(6):
+                            for k in range(3):
+                                if self.qr_code[self.corners[c][0]+i][self.corners[c][1]-10+k] == None:
+                                    self.qr_code[self.corners[c][0]+i][self.corners[c][1]-10+k] = "f"
+                case 2:
+                    for i in range(7):
+                        if self.qr_code[temp_corners[c][0]+i][temp_corners[c][1]] == None:
+                            self.qr_code[temp_corners[c][0]+i][temp_corners[c][1]] = "f"
+                    if self.ver >= 7:
+                        for i in range(6):
+                            for k in range(3):
+                                if self.qr_code[self.corners[c][0]-10+k][self.corners[c][1]+i] == None:
+                                    self.qr_code[self.corners[c][0]-10+k][self.corners[c][1]+i] = "f"
+            
     #endregion
 
 class Encoder:
@@ -413,22 +466,30 @@ class Encoder:
             case const.data_mode.ALPHANUMERIC:
                 self.data = self.get_alphanumeric()
             case const.data_mode.BYTE:
-                pass
+                self.data = self.get_byte()
             case const.data_mode.KANJI:
                 pass
 
+        
         self.character_count_indicator = self.get_char_count_ind(data_original=data)
         self.terminator = self.get_terminator()
         self.padding = self.get_padding()
         self.gen_poly = Polynomial(generator_polynomials.GENERATOR_POLYNOMIALS[self.ecc_per_block-1])
         self.error_correction_codewords = []
         self.fill_groups()
+        # print("group 1: " + str(self.group_1))
+        # print("group 2: " + str(self.group_2))
         self.create_ecc(group=self.group_1, data_num=self.data_codeword_num_g1)
         self.create_ecc(group=self.group_2, data_num=self.data_codeword_num_g2)
-        print(self.error_correction_codewords)
-        for i in self.error_correction_codewords:
-            for h in i:
-                print(hex(int(h,2)))
+        # print(self.error_correction_codewords)
+        # for i in self.error_correction_codewords:
+        #     for h in i:
+        #         print(hex(int(h,2)))
+        print("data mode ind: " + self.data_mode.value["indicator"])
+        print("character count: " + self.character_count_indicator)
+        print("data string: " + str(self.data))
+        print("terminator: " + self.terminator)
+        print("padding: " + self.padding)
 
     def get_alphanumeric(self):
         self.data = self.data.upper()
@@ -436,23 +497,57 @@ class Encoder:
         for i in range(0, len(self.data), 2):
             if i+1 < len(self.data):
                 result = 45 * const.ALPHANUMERIC_TO_INT[self.data[i]] + const.ALPHANUMERIC_TO_INT[self.data[i+1]]
-                binary_str.append(format(result, '011b'))
+                result = format(result, '011b')
+                binary_str.append(result)
             else:
                 result = const.ALPHANUMERIC_TO_INT[self.data[i]]
                 binary_str.append(format(result, '06b'))
         return binary_str
     
+    def get_byte(self):
+        binary_str = []
+        for char in self.data:
+            result = char.encode()
+            result = result.hex()
+            result = bin(int(result,16))[2:].zfill(8)
+            binary_str.append(result)
+        return binary_str
+
     def get_char_count_ind(self, data_original):
         match self.data_mode:
             case const.data_mode.NUMERIC:
                 cci = len(str(data_original))
+                if self.ver < 10:
+                    cci = format(cci, '010b')
+                elif self.ver < 27:
+                    cci = format(cci, '012b')
+                else:
+                    cci = format(cci, '014b')
             case const.data_mode.ALPHANUMERIC:
                 cci = len(data_original)
+                if self.ver < 10:
+                    cci = format(cci, '09b')
+                elif self.ver < 27:
+                    cci = format(cci, '011b')
+                else:
+                    cci = format(cci, '013b')
             case const.data_mode.BYTE:
                 cci = len(data_original)
+                if self.ver < 10:
+                    cci = format(cci, '08b')
+                elif self.ver < 27:
+                    cci = format(cci, '016b')
+                else:
+                    cci = format(cci, '016b')
             case const.data_mode.KANJI:
                 cci = len(data_original)
-        return format(cci, '09b')
+                if self.ver < 10:
+                    cci = format(cci, '08b')
+                elif self.ver < 27:
+                    cci = format(cci, '010b')
+                else:
+                    cci = format(cci, '012b')
+        return cci
 
     def get_terminator(self):
         bits_used = len(self.data_mode.value["indicator"]) + len(self.character_count_indicator)
@@ -469,10 +564,10 @@ class Encoder:
         for b in self.data:
             bits_used += len(b)
         bits_used += len(self.terminator)
+        print(bits_used)
         if bits_used % 8 != 0:
             padding = format(0, '0' + str(8 - bits_used % 8) + 'b')
         count = 0
-        
         while bits_used + len(padding) < self.bits_total:
             count %= 2
             padding += const.PADDING_BYTES[count]
@@ -481,10 +576,12 @@ class Encoder:
 
     def fill_groups(self):
         data_str = self.data_mode.value["indicator"] + self.character_count_indicator
-        for str in self.data:
-            data_str += str
+        for bin in self.data:
+            data_str += bin
         data_str += self.terminator + self.padding
         # print("data str: " + data_str)
+        # print("data str len: " + str(len(data_str)))
+        # print(self.padding)
         count = 0
         for block in range(len(self.group_1)):
             for codeword in range(len(self.group_1[block])):
@@ -508,9 +605,11 @@ class Encoder:
                 message_poly.append(np.nan)
             message_poly.reverse()
             message_poly = Polynomial(np.array(message_poly))
-            print("data total: " + str(data_num))
-            print(self.ver)
+            # print("data total: " + str(data_num))
+            # print(self.ver)
             for i in range(data_num):
+                if len(message_poly.polynomial) <= self.ecc_per_block :
+                    break
                 lead_term = np.nan
                 lead_term_index = np.nan
                 for k in range(len(message_poly.polynomial)):
@@ -521,13 +620,13 @@ class Encoder:
                 temp_lead_poly = np.full(len(message_poly.polynomial) - len(self.gen_poly.polynomial) - lead_term_index +2, np.nan)
                 for k in range(lead_term_index):
                     np.append(temp_lead_poly, [np.nan])
-                temp_lead_poly[-1] = lead_term
+                    temp_lead_poly[-1] = lead_term
                 temp_gen_poly = Polynomial(self.gen_poly.polynomial)
                 temp_gen_poly.poly_multiply(temp_lead_poly)
-                print("Division: " + str(i))
-                print("temp gen poly: " + str(temp_gen_poly.polynomial))
-                print("message poly: " + str(message_poly.polynomial))
-                print("")
+                # print("Division: " + str(i))
+                # print("temp gen poly: " + str(temp_gen_poly.polynomial))
+                # print("message poly: " + str(message_poly.polynomial))
+                # print("")
                 if len(temp_gen_poly.polynomial) > len(message_poly.polynomial):
                     break
                 message_poly.poly_xor(temp_gen_poly.polynomial)
@@ -543,22 +642,24 @@ class Encoder:
     def get_data_str(self):
         data_str_bin = ""
         block_total = self.block_num_g1 + self.block_num_g2
-        group_3 = [self.group_1, self.group_2]
+        group_3 = list(self.group_1) + list(self.group_2)
         if  self.data_codeword_num_g1 > self.data_codeword_num_g2:
             max_data_per_block = self.data_codeword_num_g1
         else:
             max_data_per_block = self.data_codeword_num_g2
-        for d in range(max_data_per_block):
-            for b in range(block_total):
-                for g in range(len(group_3)):
-                    try:
-                        # Fix in future
-                        data_str_bin += str(group_3[g][b][d]).replace("b","").replace("'", "")
-                    except IndexError:
-                        pass
+
+        for data in range(max_data_per_block):
+            for block in range(block_total):
+                try:
+                    # Fix in future
+                    data_str_bin += str(group_3[block][data]).replace("b","").replace("'", "")
+                except IndexError:
+                    pass
+        
         for ecc in range(self.ecc_per_block):
             for b in range(block_total):
                 data_str_bin += self.error_correction_codewords[b][ecc]
+            
         if self.required_remainder_bits > 0:
             data_str_bin += format(0, "0" + str(self.required_remainder_bits) + "b")
         return data_str_bin

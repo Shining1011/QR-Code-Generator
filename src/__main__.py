@@ -25,13 +25,15 @@ if __name__ == "__main__":
         poly_gen.push_to_constants()
         del poly_gen
 
-    qr_code = qr.QR_Code(const.ecc_level.Q, const.data_mode.ALPHANUMERIC,"https://github.com/Shining1011/QR-Code-Generator")
-    print(qr_code.mask)
+    app = gui.GUI()
+
+    # qr_code = qr.QR_Code(ecc=const.ecc_level.L, data_mode=const.data_mode.ALPHANUMERIC, data="HELLO WORLDHELLO WORLDHELLO WORLDHELLO WORLDHELLO WORLDHELLO WORLDHELLO WORLDHELLO WORLDHELLO WORLD")
+    # qr_code.get_image(file_type=".png", pixel_size=2560)
+    # print(qr_code.ver)
+    # print(qr_code.mask.name)
     # qr_code.print_qr(qr_code.qr_code)
 
-    gui = gui.turtle_qr(10)
-    gui.draw_qr(qr=qr_code.qr_code)
-    while True:
-        trt.done()
-        
-    
+    # gui = gui.turtle_qr(10)
+    # gui.draw_qr(qr=qr_code.qr_code)
+    # while True:
+    #     trt.done()
