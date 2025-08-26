@@ -23,8 +23,10 @@ customtkinter.set_appearance_mode("System")
 customtkinter.set_default_color_theme("blue")
 
 class GUI:
-    def __init__(self):
-        self.qr = None
+    def __init__(self,max_size: int):
+        self.max_size_list = list(range(max_size))
+        for ver in range(len(self.max_size_list)):
+            self.max_size_list[ver] = str(ver+1)
 
         # App Frame
         self.app = customtkinter.CTk()
@@ -34,29 +36,35 @@ class GUI:
         #Adding UI Elements
         self.title = customtkinter.CTkLabel(self.app, text="Input Box")
         self.title.pack(padx=10,pady=10)
-        self.title.place(relx=0.5, rely=0.1, anchor=tkinter.CENTER)
         self.QR_text = tkinter.StringVar()
         self.text_box = customtkinter.CTkEntry(self.app, width=350, height=40, textvariable=self.QR_text)
         self.text_box.pack()
+        self.generate_button = customtkinter.CTkButton(self.app, text="Generate QR Code", command=self.generate_qr_code)
+        self.generate_button.place(relx=0.5, rely=0.3, anchor=tkinter.CENTER)
+        self.ecc_options = customtkinter.CTkOptionMenu(self.app, values=["L","M","Q","H"])
+        self.min_size_options = customtkinter.CTkOptionMenu(self.app, values=self.max_size_list)
+        self.force_mask_options = customtkinter.CTkOptionMenu(self.app, values=["Auto", "1", "2", "3", "4", "5", "6", "7", "8"])
+        self.my_label = customtkinter.CTkLabel(self.app, text="")
+        self.my_label.pack(pady=20)
+
+        self.my_label.place(relx=0.5, rely=0.6, anchor=tkinter.CENTER)
+        self.ecc_options.place(relx=0.9, rely=0.2, anchor=tkinter.CENTER)
+        self.min_size_options.place(relx=0.9, rely=0.4, anchor=tkinter.CENTER)
+        self.force_mask_options.place(relx=0.9, rely=0.6, anchor=tkinter.CENTER)
         self.text_box.place(relx=0.5, rely=0.2, anchor=tkinter.CENTER)
-        generate_button = customtkinter.CTkButton(self.app, text="Generate QR Code", command=self.generate_qr_code)
-        generate_button.place(relx=0.5, rely=0.3, anchor=tkinter.CENTER)
-        self.my_label = None
+        self.title.place(relx=0.5, rely=0.1, anchor=tkinter.CENTER)
 
         # Run App
         self.app.mainloop()
 
     def generate_qr_code(self):
-        if self.my_label != None:
-            self.my_label.destroy()
-            self.my_label = None
-        self.qr = qr.QR_Code(ecc=const.ecc_level.L, data_mode=const.data_mode.BYTE, data=self.text_box.get())
+        self.generate_button._state = customtkinter.DISABLED
+        self.qr = qr.QR_Code(data=self.text_box.get(), ecc=self.ecc_options.get(), force_mask=self.force_mask_options.get(), min_ver=self.min_size_options.get())
         self.qr.create_image(file_type=".png",pixel_size=400)
         img = Image.open("qr_code.png")
         img = ImageTk.PhotoImage(img)
-        self.my_label = customtkinter.CTkLabel(self.app, image=img, text="")
-        self.my_label.pack(pady=20)
-        self.my_label.place(relx=0.5, rely=0.6, anchor=tkinter.CENTER)
+        self.my_label.configure(image=img)
+        self.generate_button._state = customtkinter.NORMAL
 
 
 

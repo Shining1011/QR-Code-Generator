@@ -19,28 +19,28 @@ except yaml.YAMLError as e:
     exit_program()
 
 class QR_Code:
-    def __init__(self, ecc: const.ecc_level, data_mode: const.data_mode, data, ver=None):
-        self.ecc = ecc
-        self.data_mode = data_mode
+    def __init__(self, data, ecc="L", min_ver="0", force_mask="Auto"):
+        match ecc:
+            case "L":
+                self.ecc = const.ecc_level.L
+            case "M":
+                self.ecc = const.ecc_level.M
+            case "Q":
+                self.ecc = const.ecc_level.Q
+            case "H":
+                self.ecc = const.ecc_level.H
+            case _:
+                print("Not a valid error correction capacity")
+                exit_program()
         self.data = data
-        self.ver = ver
-        if self.ver == None:
-            self.ver = self.find_version()
+        self.data_mode = self.find_data_mode()
+        self.ver = self.find_version(min_ver=int(min_ver))
         self.size = const.QR_VERSION_SIZES[self.ver]
         self.encoder = Encoder(ecc=self.ecc, ver=self.ver, data_mode=self.data_mode, data=self.data)
         self.alignment_module_locations = version_capacity_file[self.ver]["template_information"]
         self.data_str = self.encoder.get_data_str()
         self.data_placed = 0
         self.mask_test_score = np.full(8,0)
-
-        temp_data = self.data_str
-        temp_data_list = []
-        
-        # for k in range(0, len(temp_data), 8):
-        #     temp_data_list.append(temp_data[k:k+8])
-        # print(temp_data_list)
-        # for i in temp_data_list:
-        #     print(hex(int(i,2)))
 
         # index 0 = y
         # index 1 = x
@@ -59,16 +59,30 @@ class QR_Code:
         self.create_dark_module()
         self.reserve_formatting_location()
         self.place_data()
-        self.mask = self.get_mask()
-        self.mask = const.mask_level.VER_2
+        match force_mask:
+            case "Auto":
+                self.mask = self.get_mask()
+            case "1":
+                self.mask = const.mask_level.VER_0
+            case "2":
+                self.mask = const.mask_level.VER_1
+            case "3":
+                self.mask = const.mask_level.VER_2
+            case "4":
+                self.mask = const.mask_level.VER_3
+            case "5":
+                self.mask = const.mask_level.VER_4
+            case "6":
+                self.mask = const.mask_level.VER_5
+            case "7":
+                self.mask = const.mask_level.VER_6
+            case "8":
+                self.mask = const.mask_level.VER_7
+            case _:
+                print("Not a valid mask version")
+                exit_program()
         self.qr_code = self.place_formatting(self.mask, self.qr_code)
         self.qr_code = self.apply_mask(self.mask, self.qr_code)
-        # print(self.place_data)
-        # print("len of remaining bits" + str(len(self.data_str) - self.data_placed))
-        # self.print_qr(self.qr_code)
-        # print(self.encoder.group_1)
-        # print(self.encoder.group_2)
-        # print(self.encoder.error_correction_codewords)
 
     def place_data(self):
         temp_corner = self.corners.copy()[3]
@@ -132,17 +146,38 @@ class QR_Code:
                         print(str(self.qr_code[i][k]), end="  ")
             print("")
         
-    def find_version(self):
+    def find_version(self, min_ver):
         if self.data_mode == const.data_mode.NUMERIC:
             byte_len = len(str(self.data))
         else:
             byte_len = len(self.data)
 
         for v in version_capacity_file:
-            if byte_len < version_capacity_file[v][self.ecc.value["name"]]["data_mode"][self.data_mode.value["name"]]:
+            if v < min_ver:
+                pass
+            elif byte_len < version_capacity_file[v][self.ecc.value["name"]]["data_mode"][self.data_mode.value["name"]]:
                 return v
         print("Error value inputted is too large")
         exit_program()
+
+    def find_data_mode(self):
+        print(str(self.data))
+        can_be_numeric = True
+        can_be_alphanumeric = True
+        for char in str(self.data):
+            try:
+                c = const.ALPHANUMERIC_TO_INT[char]
+                if c > 9:
+                    can_be_numeric = False
+            except KeyError:
+                print(char)
+                can_be_alphanumeric = False
+                can_be_numeric = False
+        if can_be_numeric:
+            return const.data_mode.NUMERIC
+        if can_be_alphanumeric:
+            return const.data_mode.ALPHANUMERIC
+        return const.data_mode.BYTE
 
     def place_formatting(self, mask_ver: const.mask_level, qr: np.array):
         # Needs improvement
@@ -462,7 +497,7 @@ class Encoder:
 
         match self.data_mode:
             case const.data_mode.NUMERIC:
-                pass
+                self.data = self.get_numeric()
             case const.data_mode.ALPHANUMERIC:
                 self.data = self.get_alphanumeric()
             case const.data_mode.BYTE:
@@ -470,7 +505,6 @@ class Encoder:
             case const.data_mode.KANJI:
                 pass
 
-        
         self.character_count_indicator = self.get_char_count_ind(data_original=data)
         self.terminator = self.get_terminator()
         self.padding = self.get_padding()
@@ -511,6 +545,27 @@ class Encoder:
             result = result.hex()
             result = bin(int(result,16))[2:].zfill(8)
             binary_str.append(result)
+        return binary_str
+
+    def get_numeric(self):
+        binary_str = []
+        for i in range(0, len(self.data), 3):
+            print(i)
+            if i+3 <= len(self.data):
+                result = int(self.data[i:i+3])
+                print(result)
+                result = format(result, '010b')
+                binary_str.append(result)
+            elif i+2 <= len(self.data):
+                result = int(self.data[i:i+2])
+                print(result)
+                result = format(result, '07b')
+                binary_str.append(result)
+            else:
+                result = int(self.data[i])
+                print(result)
+                result = format(result, '04b')
+                binary_str.append(result)
         return binary_str
 
     def get_char_count_ind(self, data_original):
@@ -629,6 +684,8 @@ class Encoder:
                 # print("")
                 if len(temp_gen_poly.polynomial) > len(message_poly.polynomial):
                     break
+                while np.isnan(message_poly.polynomial[-1]):
+                    message_poly.polynomial = message_poly.polynomial[::-1]
                 message_poly.poly_xor(temp_gen_poly.polynomial)
             for p in message_poly.polynomial:
                 if np.isnan(p):

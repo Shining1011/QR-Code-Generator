@@ -25,7 +25,7 @@ if __name__ == "__main__":
         poly_gen.push_to_constants()
         del poly_gen
 
-    app = gui.GUI()
+    app = gui.GUI(config['qr_code']['max_version_size'])
 
     # qr_code = qr.QR_Code(ecc=const.ecc_level.L, data_mode=const.data_mode.ALPHANUMERIC, data="HELLO WORLDHELLO WORLDHELLO WORLDHELLO WORLDHELLO WORLDHELLO WORLDHELLO WORLDHELLO WORLDHELLO WORLD")
     # qr_code.get_image(file_type=".png", pixel_size=2560)
