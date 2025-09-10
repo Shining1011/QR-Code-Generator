@@ -1,6 +1,7 @@
 from QR_Code_Generator import GenerateQR as qr
 from Data import constants as const
 from PIL import Image, ImageTk
+from sys import exit as exit_program
 import tkinter
 import customtkinter
 import turtle as trt
@@ -59,7 +60,41 @@ class GUI:
 
     def generate_qr_code(self):
         self.generate_button._state = customtkinter.DISABLED
-        self.qr = qr.QR_Code(data=self.text_box.get(), ecc=self.ecc_options.get(), force_mask=self.force_mask_options.get(), min_ver=self.min_size_options.get())
+        match self.ecc_options.get():
+            case "L":
+                ecc = const.ecc_level.L
+            case "M":
+                ecc = const.ecc_level.M
+            case "Q":
+                ecc = const.ecc_level.Q
+            case "H":
+                ecc = const.ecc_level.H
+            case _:
+                print("That error correction capacity does not exist")
+                exit_program()
+        match self.force_mask_options.get():
+            case "Auto":
+                force_mask = None
+            case "1":
+                force_mask = const.mask_level.VER_0
+            case "2":
+                force_mask = const.mask_level.VER_1
+            case "3":
+                force_mask = const.mask_level.VER_2
+            case "4":
+                force_mask = const.mask_level.VER_3
+            case "5":
+                force_mask = const.mask_level.VER_4
+            case "6":
+                force_mask = const.mask_level.VER_5
+            case "7":
+                force_mask = const.mask_level.VER_6
+            case "8":
+                force_mask = const.mask_level.VER_7
+            case _:
+                print("That mask level does not exist")
+                exit_program()
+        self.qr = qr.QR_Code(data=self.text_box.get(), ecc=ecc, force_mask=force_mask, min_ver=int(self.min_size_options.get()))
         self.qr.create_image(file_type=".png",pixel_size=400)
         img = Image.open("qr_code.png")
         img = ImageTk.PhotoImage(img)

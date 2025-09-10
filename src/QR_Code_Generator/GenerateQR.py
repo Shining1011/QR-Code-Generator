@@ -19,19 +19,8 @@ except yaml.YAMLError as e:
     exit_program()
 
 class QR_Code:
-    def __init__(self, data, ecc="L", min_ver="0", force_mask="Auto"):
-        match ecc:
-            case "L":
-                self.ecc = const.ecc_level.L
-            case "M":
-                self.ecc = const.ecc_level.M
-            case "Q":
-                self.ecc = const.ecc_level.Q
-            case "H":
-                self.ecc = const.ecc_level.H
-            case _:
-                print("Not a valid error correction capacity")
-                exit_program()
+    def __init__(self, data, ecc: const.ecc_level, min_ver:int, force_mask: const.mask_level):
+        self.ecc = ecc
         self.data = data
         self.data_mode = self.find_data_mode()
         self.ver = self.find_version(min_ver=int(min_ver))
@@ -59,28 +48,10 @@ class QR_Code:
         self.create_dark_module()
         self.reserve_formatting_location()
         self.place_data()
-        match force_mask:
-            case "Auto":
-                self.mask = self.get_mask()
-            case "1":
-                self.mask = const.mask_level.VER_0
-            case "2":
-                self.mask = const.mask_level.VER_1
-            case "3":
-                self.mask = const.mask_level.VER_2
-            case "4":
-                self.mask = const.mask_level.VER_3
-            case "5":
-                self.mask = const.mask_level.VER_4
-            case "6":
-                self.mask = const.mask_level.VER_5
-            case "7":
-                self.mask = const.mask_level.VER_6
-            case "8":
-                self.mask = const.mask_level.VER_7
-            case _:
-                print("Not a valid mask version")
-                exit_program()
+        if force_mask == None:
+            self.mask = self.get_mask()
+        else:
+            self.mask = force_mask
         self.qr_code = self.place_formatting(self.mask, self.qr_code)
         self.qr_code = self.apply_mask(self.mask, self.qr_code)
 

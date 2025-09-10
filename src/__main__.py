@@ -7,6 +7,10 @@ from sys import exit as exit_program
 import numpy as np
 import turtle as trt
 
+import pstats
+import time
+import cProfile
+
 
 try:
     with open("config.toml", 'r') as file:
@@ -25,15 +29,15 @@ if __name__ == "__main__":
         poly_gen.push_to_constants()
         del poly_gen
 
+    # for i in range(256):
+    #     print(const.alpha_to_coef(i))
+    #     print(const.ALPHA_TO_COEF[i])
+
     app = gui.GUI(config['qr_code']['max_version_size'])
 
-    # qr_code = qr.QR_Code(ecc=const.ecc_level.L, data_mode=const.data_mode.ALPHANUMERIC, data="HELLO WORLDHELLO WORLDHELLO WORLDHELLO WORLDHELLO WORLDHELLO WORLDHELLO WORLDHELLO WORLDHELLO WORLD")
-    # qr_code.get_image(file_type=".png", pixel_size=2560)
-    # print(qr_code.ver)
-    # print(qr_code.mask.name)
-    # qr_code.print_qr(qr_code.qr_code)
-
-    # gui = gui.turtle_qr(10)
-    # gui.draw_qr(qr=qr_code.qr_code)
-    # while True:
-    #     trt.done()
+    # with cProfile.Profile() as profile:
+    #     qr = qr.QR_Code(data="HELLO WORLD", ecc=const.ecc_level.H, force_mask=None, min_ver=5)
+    # results = pstats.Stats(profile)
+    # results.sort_stats(pstats.SortKey.TIME)
+    # # results.print_stats()
+    # results.dump_stats("results.prof")
