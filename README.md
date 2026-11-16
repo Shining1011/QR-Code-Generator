@@ -6,4 +6,11 @@ This project is mainly for practice, but is also a free QR code generator that c
 
 This project was mostly possible thanks to Thonky.com for providing amazing information on creating QR codes.
 
-use pip to install dependencies Pillow, customTkinter, yaml, and galois
+use pip to install dependencies Pillow, customTkinter, and galois
+
+Paste to terminal:
+
+pip install Pillow
+pip install customTkinter
+pip install galois
+
